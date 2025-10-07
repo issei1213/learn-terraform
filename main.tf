@@ -16,7 +16,7 @@ terraform {
 # --------------------------------
 provider "aws" {
   profile = "terraform"
-  region  = "ap-north-east1"
+  region  = "ap-northeast-1"
 }
 
 # --------------------------------
