@@ -49,3 +49,6 @@ terraform.rc
 
 src/AWS Terraform Infrastructure as Code/
 src/tastylog-mw-all-1.0.0
+
+password.txt
+cert/*
