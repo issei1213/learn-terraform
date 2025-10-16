@@ -45,3 +45,12 @@ variable "environment" {
 variable "domain" {
   type = string
 }
+
+module "webserver" {
+  source        = "./modules/nginx_server"
+  instance_type = "t3.micro"
+}
+
+output "web_server_id" {
+  value = module.webserver.instance_id
+}
