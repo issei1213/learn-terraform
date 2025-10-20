@@ -60,18 +60,42 @@ resource "aws_s3_bucket_ownership_controls" "public" {
     # ACL を許可したい場合、BucketOwnerPreferred または ObjectWriter を指定します
     # - "BucketOwnerPreferred": バケット所有者が優先されるが ACL は許可される
     # - "ObjectWriter": オブジェクト作成者が所有者となる（ACL 利用可）
-    object_ownership = "BucketOwnerPreferred"
+    object_ownership = "BucketOwnerEnforced"
   }
 }
 
-# パブリック読み取りアクセスの設定。インターネットから読み取り可能にする。
-resource "aws_s3_bucket_acl" "s3_bucket_public_acl" {
+# バケットの公開をポリシーで許す（ACLは使わない）
+resource "aws_s3_bucket_public_access_block" "public" {
   bucket = aws_s3_bucket.public.id
-  acl    = "public-read"
-  depends_on = [
-    aws_s3_bucket_ownership_controls.public
-  ]
+
+  # ポリシーでの公開をブロックしない
+  block_public_policy     = false
+  restrict_public_buckets = false
+
+  # ACL は使わないのでブロックしてOK
+  block_public_acls  = true
+  ignore_public_acls = true
 }
+
+resource "aws_s3_bucket_policy" "public_read" {
+  bucket = aws_s3_bucket.public.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Sid       = "PublicReadGetObject"
+        Principal = "*"
+        Action    = ["s3:GetObject"]
+        Resource  = ["${aws_s3_bucket.public.arn}/*"]
+      }
+    ]
+  })
+
+  # パブリックアクセスブロックの設定後にポリシーを適用
+  depends_on = [aws_s3_bucket_public_access_block.public]
+}
+
 
 # CORS設定。特定のオリジンからのGETリクエストを許可する。
 resource "aws_s3_bucket_cors_configuration" "s3_bucket_public_cors_configuration" {
@@ -120,7 +144,35 @@ data "aws_iam_policy_document" "alb_log_policy" {
 
     principals {
       type        = "AWS"
-      identifiers = ["987962575082"]
+      identifiers = ["582318560864"] # ap-northeast-1のELBサービスアカウント
+    }
+  }
+
+  statement {
+    effect    = "Allow"
+    actions   = ["s3:PutObject"]
+    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_log.id}/*"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["delivery.logs.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+  }
+
+  statement {
+    effect    = "Allow"
+    actions   = ["s3:GetBucketAcl"]
+    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_log.id}"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["delivery.logs.amazonaws.com"]
     }
   }
 }
