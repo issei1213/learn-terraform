@@ -1,4 +1,4 @@
-# ホソトゾーンのデータソース定義
+# ホストゾーンのデータソース定義
 locals {
   name = "issei1213.com"
 }
@@ -26,6 +26,10 @@ resource "aws_route53_record" "example" {
   }
 }
 
-output "domain_name" {
+output "domain_name_http" {
   value = "http://${aws_route53_record.example.name}"
+}
+
+output "domain_name_https" {
+  value = "https://${aws_route53_record.example.name}"
 }
