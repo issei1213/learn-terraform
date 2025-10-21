@@ -29,7 +29,7 @@ resource "aws_lb" "example" {
   load_balancer_type         = "application"
   internal                   = false // インターネット向け
   idle_timeout               = 60    // タイムアウト時間（秒）
-  enable_deletion_protection = true  // 削除保護を有効化
+  enable_deletion_protection = false // 削除保護を有効化
 
   // パブリックサブネットに配置
   subnets = [
@@ -105,6 +105,44 @@ resource "aws_lb_listener" "redirect_http_to_https" {
     }
   }
 
+}
+
+resource "aws_lb_listener_rule" "example" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 100 // リスナールールの優先度 
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.example.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/*"]
+    }
+  }
+}
+
+// ECSと紐づけるためのターゲットグループの定義
+resource "aws_lb_target_group" "example" {
+  name                 = "example"
+  target_type          = "ip"               // ECSの場合は"ip"
+  vpc_id               = aws_vpc.example.id // target_typeが"ip"の場合はVPC IDが必須
+  port                 = 80                 // target_typeが"ip"の場合はポートが必須
+  protocol             = "HTTP"             // target_typeが"ip"の場合はプロトコルが必須。ALBの終端がHTTPであるため。
+  deregistration_delay = 300                // ターゲット登録解除の遅延時間（秒）
+
+  health_check {
+    path                = "/"            // ヘルスチェックのパス
+    healthy_threshold   = 5              // ヘルシー判定の閾値
+    unhealthy_threshold = 2              // アンヘルシー判定の閾値
+    timeout             = 5              // ヘルスチェックのタイムアウト時間（秒）
+    interval            = 200            // ヘルスチェックの間隔時間（秒）
+    port                = "traffic-port" // ヘルスチェックのポート
+    protocol            = "HTTP"         // ヘルスチェックのプロトコル
+  }
+
+  depends_on = [aws_lb.example]
 }
 
 output "alb_dns_name" {

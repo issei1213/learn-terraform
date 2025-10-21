@@ -11,7 +11,8 @@ resource "random_string" "s3_unique_key" {
 # --------------------------------
 # プライベートバケットの定義
 resource "aws_s3_bucket" "private" {
-  bucket = "private-pragmatic-terraform-${random_string.s3_unique_key.result}"
+  bucket        = "private-pragmatic-terraform-${random_string.s3_unique_key.result}"
+  force_destroy = true
 }
 
 # バージョニングでいつでも旧バージョンに戻せるようにする
@@ -49,7 +50,8 @@ resource "aws_s3_bucket_public_access_block" "private" {
 # --------------------------------
 # パブリックバケットの定義
 resource "aws_s3_bucket" "public" {
-  bucket = "public-pragmatic-terraform-${random_string.s3_unique_key.result}"
+  bucket        = "public-pragmatic-terraform-${random_string.s3_unique_key.result}"
+  force_destroy = true
 }
 
 # バケットの Object Ownership を ACL が使える設定に変更
@@ -114,7 +116,8 @@ resource "aws_s3_bucket_cors_configuration" "s3_bucket_public_cors_configuration
 # --------------------------------
 # ログバケットの定義
 resource "aws_s3_bucket" "alb_log" {
-  bucket = "alb-log-pragmatic-terraform-${random_string.s3_unique_key.result}"
+  bucket        = "alb-log-pragmatic-terraform-${random_string.s3_unique_key.result}"
+  force_destroy = true
 }
 
 # ALBのアクセスログ保存用に180日後にオブジェクトを削除するライフサイクルルールの設定
