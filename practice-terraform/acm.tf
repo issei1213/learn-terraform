@@ -1,8 +1,7 @@
 # SSL証明書の定義
 resource "aws_acm_certificate" "example" {
-  domain_name               = "issei1213.com" // 作成したDNSレコードを参照
-  subject_alternative_names = []              // 必要に応じて追加のSLを指定
-  validation_method         = "DNS"           // DNS検証を使用
+  domain_name       = "issei1213.com" // 作成したDNSレコードを参照
+  validation_method = "DNS"           // DNS検証を使用
 
   lifecycle {
     create_before_destroy = true // デフォルトではリソース削除→作成の順で行われるが、先に作成してから削除するように設定
