@@ -24,3 +24,6 @@ provider "aws" {
     }
   }
 }
+provider "github" {
+  organization = "your-github-username"
+}
